@@ -1,0 +1,2715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Grimoire — DM Prep Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --obsidian: #0a0a0f;
+    --obsidian-2: #111118;
+    --obsidian-3: #16161f;
+    --obsidian-4: #1e1e2a;
+    --obsidian-5: #252535;
+    --parchment: #c8b89a;
+    --parchment-dim: #8a7a65;
+    --parchment-faint: #3a3025;
+    --blood: #8b1a1a;
+    --blood-bright: #c0392b;
+    --gold: #c9a84c;
+    --gold-dim: #7a6530;
+    --gold-bright: #f0c060;
+    --ember: #d4622a;
+    --sage: #4a7a5a;
+    --sage-bright: #6aaa7a;
+    --ice: #4a6a8a;
+    --ice-bright: #6a9aba;
+    --text-primary: #f0e6d2;
+    --text-secondary: #c4ae94;
+    --text-dim: #8a7862;
+    --border: #2a2a38;
+    --border-gold: #3a3020;
+    --glow-gold: rgba(201, 168, 76, 0.15);
+    --glow-blood: rgba(139, 26, 26, 0.2);
+    --font-display: 'Cinzel', serif;
+    --font-body: 'Crimson Pro', serif;
+    --font-mono: 'Courier Prime', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--obsidian);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--obsidian-2); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+
+  /* ── LAYOUT ── */
+  .app { display: flex; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--obsidian-2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border-gold);
+    text-align: center;
+  }
+
+  .sidebar-logo .rune {
+    font-size: 28px;
+    line-height: 1;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 8px var(--gold));
+  }
+
+  .sidebar-logo h1 {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  .sidebar-logo p {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+    font-family: var(--font-mono);
+  }
+
+  .sidebar-section {
+    padding: 16px 12px 8px;
+  }
+
+  .sidebar-section-label {
+    font-family: var(--font-display);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    padding: 0 8px;
+    margin-bottom: 4px;
+  }
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    letter-spacing: 0.02em;
+  }
+
+  .nav-btn:hover {
+    background: var(--obsidian-4);
+    color: var(--parchment);
+  }
+
+  .nav-btn.active {
+    background: var(--parchment-faint);
+    color: var(--gold);
+    border-left: 2px solid var(--gold);
+  }
+
+  .nav-btn .icon { font-size: 14px; width: 18px; text-align: center; }
+
+  .sidebar-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 12px;
+  }
+
+  /* Global action buttons in sidebar */
+  .global-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: calc(100% - 24px);
+    margin: 3px 12px;
+    padding: 8px 12px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--parchment);
+    font-family: var(--font-body);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+  }
+
+  .global-btn:hover {
+    border-color: var(--gold-dim);
+    color: var(--gold);
+    background: var(--glow-gold);
+  }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    padding: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .topbar {
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--obsidian-2);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--parchment);
+    letter-spacing: 0.05em;
+  }
+
+  .topbar-subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 1px;
+    font-family: var(--font-mono);
+  }
+
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+  .content {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+    max-height: calc(100vh - 65px);
+  }
+
+  /* ── CARDS ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+  }
+
+  .card-grid-single {
+    max-width: 900px;
+  }
+
+  .grimoire-card {
+    background: var(--obsidian-3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+    position: relative;
+  }
+
+  .grimoire-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .grimoire-card:hover::before { opacity: 1; }
+  .grimoire-card:hover { border-color: var(--gold-dim); }
+
+  .card-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--obsidian-4);
+  }
+
+  .card-header-left { display: flex; align-items: center; gap: 10px; }
+
+  .card-type-badge {
+    font-family: var(--font-display);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    background: var(--parchment-faint);
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid var(--border-gold);
+  }
+
+  .card-name {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--parchment);
+    letter-spacing: 0.03em;
+  }
+
+  .card-actions { display: flex; gap: 6px; }
+
+  .card-body { padding: 20px; }
+
+  /* ── FORM ELEMENTS ── */
+  .field-group {
+    margin-bottom: 20px;
+  }
+
+  .field-section-label {
+    font-family: var(--font-display);
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-gold);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .field-section-label::before {
+    content: '◆';
+    font-size: 7px;
+    color: var(--gold);
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .field-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .field { margin-bottom: 12px; }
+
+  label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  input[type="text"], input[type="date"], input[type="number"],
+  textarea, select {
+    width: 100%;
+    background: var(--obsidian-2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 8px 12px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    line-height: 1.5;
+  }
+
+  input[type="text"]:focus, input[type="date"]:focus,
+  input[type="number"]:focus, textarea:focus, select:focus {
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 0 3px var(--glow-gold);
+  }
+
+  textarea { resize: vertical; min-height: 70px; }
+  textarea.tall { min-height: 120px; }
+  textarea.short { min-height: 50px; }
+
+  select option { background: var(--obsidian-3); }
+
+  /* Status tag select */
+  .status-select {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .status-tag {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: none;
+    color: var(--text-dim);
+  }
+
+  .status-tag:hover { border-color: var(--parchment-dim); color: var(--parchment); }
+  .status-tag.active-tag { background: var(--parchment-faint); color: var(--gold); border-color: var(--gold-dim); }
+
+  /* Danger level */
+  .danger-select { display: flex; gap: 8px; }
+  .danger-btn {
+    flex: 1;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: none;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .danger-btn:hover { border-color: var(--parchment-dim); }
+  .danger-btn.safe.active-danger { background: rgba(74,122,90,0.2); color: var(--sage-bright); border-color: var(--sage); }
+  .danger-btn.uneasy.active-danger { background: rgba(201,168,76,0.15); color: var(--gold-bright); border-color: var(--gold-dim); }
+  .danger-btn.volatile.active-danger { background: rgba(212,98,42,0.2); color: var(--ember); border-color: var(--ember); }
+  .danger-btn.deadly.active-danger { background: rgba(139,26,26,0.2); color: var(--blood-bright); border-color: var(--blood); }
+
+  /* Pacing */
+  .pacing-select { display: flex; gap: 8px; }
+  .pacing-btn {
+    flex: 1;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: none;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .pacing-btn:hover { border-color: var(--parchment-dim); }
+  .pacing-btn.slow.active-pacing { background: rgba(74,106,138,0.2); color: var(--ice-bright); border-color: var(--ice); }
+  .pacing-btn.medium.active-pacing { background: rgba(201,168,76,0.15); color: var(--gold-bright); border-color: var(--gold-dim); }
+  .pacing-btn.fast.active-pacing { background: rgba(139,26,26,0.2); color: var(--blood-bright); border-color: var(--blood); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    padding: 8px 16px;
+    border-radius: 5px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-primary {
+    background: var(--parchment-faint);
+    color: var(--gold);
+    border: 1px solid var(--gold-dim);
+  }
+  .btn-primary:hover {
+    background: var(--gold-dim);
+    color: var(--obsidian);
+    box-shadow: 0 0 12px var(--glow-gold);
+  }
+
+  .btn-danger {
+    background: var(--glow-blood);
+    color: var(--blood-bright);
+    border: 1px solid var(--blood);
+  }
+  .btn-danger:hover {
+    background: var(--blood);
+    color: var(--text-primary);
+  }
+
+  .btn-ghost {
+    background: none;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover {
+    border-color: var(--parchment-dim);
+    color: var(--parchment);
+  }
+
+  .btn-sage {
+    background: rgba(74,122,90,0.15);
+    color: var(--sage-bright);
+    border: 1px solid var(--sage);
+  }
+  .btn-sage:hover { background: rgba(74,122,90,0.3); }
+
+  .btn-ice {
+    background: rgba(74,106,138,0.15);
+    color: var(--ice-bright);
+    border: 1px solid var(--ice);
+  }
+  .btn-ice:hover { background: rgba(74,106,138,0.3); }
+
+  .btn-sm { padding: 5px 10px; font-size: 10px; }
+  .btn-lg { padding: 10px 22px; font-size: 12px; }
+
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── CLAUDE PANEL ── */
+  .claude-panel {
+    background: var(--obsidian-2);
+    border: 1px solid var(--border-gold);
+    border-radius: 6px;
+    padding: 16px;
+    margin-top: 16px;
+  }
+
+  .claude-panel-header {
+    font-family: var(--font-display);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .claude-panel-header::before {
+    content: '✦';
+    color: var(--gold);
+    font-size: 10px;
+    animation: pulse-gold 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-gold {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .claude-response {
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--parchment);
+    white-space: pre-wrap;
+    font-style: italic;
+  }
+
+  .claude-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .loading-dots span {
+    animation: blink 1.4s infinite;
+    font-size: 18px;
+    color: var(--gold-dim);
+  }
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes blink {
+    0%, 80%, 100% { opacity: 0; }
+    40% { opacity: 1; }
+  }
+
+  /* ── DASHBOARD ── */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  .dashboard-banner {
+    background: linear-gradient(135deg, var(--obsidian-3) 0%, var(--parchment-faint) 100%);
+    border: 1px solid var(--border-gold);
+    border-radius: 8px;
+    padding: 28px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dashboard-banner::after {
+    content: '⚔';
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 64px;
+    opacity: 0.06;
+    color: var(--gold);
+  }
+
+  .dashboard-banner h2 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+
+  .dashboard-banner p {
+    color: var(--parchment);
+    font-size: 14px;
+  }
+
+  .dashboard-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .stat-box {
+    background: var(--obsidian-4);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+  }
+
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--parchment);
+    margin-top: 2px;
+  }
+
+  .quick-access {
+    background: var(--obsidian-3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .quick-access h3 {
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .quick-access-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .quick-card-btn {
+    padding: 12px;
+    background: var(--obsidian-4);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 13px;
+  }
+
+  .quick-card-btn:hover {
+    border-color: var(--gold-dim);
+    color: var(--gold);
+    background: var(--glow-gold);
+  }
+
+  .quick-card-btn .icon { font-size: 18px; display: block; margin-bottom: 4px; }
+
+  /* Dashboard info rows */
+  .info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .info-panel {
+    background: var(--obsidian-3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+  }
+
+  .info-panel h4 {
+    font-family: var(--font-display);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .info-panel p {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.5;
+  }
+
+  .info-panel .empty {
+    font-style: italic;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal {
+    background: var(--obsidian-3);
+    border: 1px solid var(--border-gold);
+    border-radius: 10px;
+    width: 100%;
+    max-width: 640px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.8), 0 0 40px var(--glow-gold);
+  }
+
+  .modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--obsidian-3);
+    z-index: 10;
+  }
+
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+  }
+
+  .modal-body { padding: 24px; }
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  /* ── GLOBAL TOOLS ── */
+  .global-tools-bar {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 200;
+  }
+
+  .global-fab {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--gold-dim);
+    background: var(--obsidian-3);
+    color: var(--gold);
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    position: relative;
+  }
+
+  .global-fab:hover {
+    background: var(--parchment-faint);
+    box-shadow: 0 0 16px var(--glow-gold);
+    transform: scale(1.05);
+  }
+
+  .global-fab .fab-label {
+    position: absolute;
+    right: 52px;
+    background: var(--obsidian-4);
+    border: 1px solid var(--border-gold);
+    color: var(--parchment);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+  }
+
+  .global-fab:hover .fab-label { opacity: 1; }
+
+  /* ── NPC LIST ── */
+  .entity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .entity-item {
+    background: var(--obsidian-3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .entity-item:hover {
+    border-color: var(--gold-dim);
+    background: var(--obsidian-4);
+  }
+
+  .entity-item-left { display: flex; align-items: center; gap: 14px; }
+
+  .entity-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    background: var(--parchment-faint);
+    border: 1px solid var(--border-gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .entity-name {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--parchment);
+    margin-bottom: 3px;
+  }
+
+  .entity-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+  }
+
+  .entity-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .badge {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+
+  .badge-ally { color: var(--sage-bright); border-color: var(--sage); background: rgba(74,122,90,0.1); }
+  .badge-hostile { color: var(--blood-bright); border-color: var(--blood); background: var(--glow-blood); }
+  .badge-neutral { color: var(--text-secondary); border-color: var(--border); }
+  .badge-unknown { color: var(--ice-bright); border-color: var(--ice); background: rgba(74,106,138,0.1); }
+  .badge-complicated { color: var(--ember); border-color: var(--ember); background: rgba(212,98,42,0.1); }
+  .badge-gold { color: var(--gold); border-color: var(--gold-dim); background: var(--glow-gold); }
+
+  /* ── TIMELINE ── */
+  .timeline {
+    position: relative;
+    padding-left: 28px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--gold-dim), transparent);
+  }
+
+  .timeline-entry {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .timeline-entry::before {
+    content: '◆';
+    position: absolute;
+    left: -24px;
+    top: 4px;
+    font-size: 8px;
+    color: var(--gold);
+  }
+
+  .timeline-session {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--gold-dim);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+
+  .timeline-content {
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+
+  /* ── NOTES ── */
+  .notes-area {
+    background: var(--obsidian-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 200px;
+  }
+
+  .notes-area textarea {
+    background: none;
+    border: none;
+    width: 100%;
+    min-height: 300px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.8;
+    resize: none;
+    outline: none;
+  }
+
+  .notes-area textarea::placeholder { color: var(--text-dim); font-style: italic; }
+
+  /* ── MISC ── */
+  .section-gap { margin-bottom: 28px; }
+  .flex-end { display: flex; justify-content: flex-end; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .gap-8 { gap: 8px; }
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .items-center { align-items: center; }
+
+  .ornament {
+    text-align: center;
+    color: var(--gold-dim);
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    margin: 16px 0;
+    opacity: 0.5;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+  }
+
+  .empty-state .empty-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.3; }
+
+  .empty-state h3 {
+    font-family: var(--font-display);
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  .empty-state p { font-size: 14px; color: var(--text-dim); }
+
+  /* Character sections on party card */
+  .character-section {
+    background: var(--obsidian-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .character-section-header {
+    padding: 10px 16px;
+    background: var(--obsidian-4);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.15s;
+  }
+
+  .character-section-header:hover { background: var(--parchment-faint); }
+
+  .character-section-name {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--parchment);
+    letter-spacing: 0.05em;
+  }
+
+  .character-section-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    margin-top: 1px;
+  }
+
+  .character-section-body { padding: 16px; }
+
+  /* Roll table output */
+  .roll-table {
+    background: var(--obsidian-2);
+    border: 1px solid var(--border-gold);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 12px;
+  }
+
+  .roll-table-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+
+  .roll-table-row:last-child { border-bottom: none; }
+  .roll-table-row:nth-child(odd) { background: rgba(255,255,255,0.02); }
+
+  .roll-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--gold);
+    font-weight: 700;
+    min-width: 28px;
+    margin-right: 10px;
+    margin-top: 1px;
+  }
+
+  .roll-text { color: var(--text-primary); line-height: 1.5; }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .tab-btn {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-dim);
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+  }
+
+  .tab-btn:hover { color: var(--parchment); }
+  .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* Notification toast */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--obsidian-4);
+    border: 1px solid var(--gold-dim);
+    color: var(--gold);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 10px 20px;
+    border-radius: 6px;
+    z-index: 9000;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Relationship badge selector */
+  .rel-select { display: flex; flex-wrap: wrap; gap: 6px; }
+  .rel-btn {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: none;
+    color: var(--text-dim);
+    transition: all 0.15s;
+  }
+  .rel-btn:hover { border-color: var(--parchment-dim); color: var(--parchment); }
+  .rel-btn.active-rel.ally { color: var(--sage-bright); border-color: var(--sage); background: rgba(74,122,90,0.15); }
+  .rel-btn.active-rel.hostile { color: var(--blood-bright); border-color: var(--blood); background: var(--glow-blood); }
+  .rel-btn.active-rel.neutral { color: var(--text-secondary); border-color: var(--parchment-dim); background: var(--obsidian-4); }
+  .rel-btn.active-rel.unknown { color: var(--ice-bright); border-color: var(--ice); background: rgba(74,106,138,0.15); }
+  .rel-btn.active-rel.complicated { color: var(--ember); border-color: var(--ember); background: rgba(212,98,42,0.15); }
+
+  /* ── LOOT SCALE ── */
+  .scale-select { display: flex; gap: 8px; }
+  .scale-btn {
+    flex: 1; padding: 7px; border: 1px solid var(--border);
+    border-radius: 5px; background: none;
+    font-size: 11px; font-family: var(--font-mono);
+    cursor: pointer; transition: all 0.15s;
+    color: var(--text-dim); text-align: center;
+  }
+  .scale-btn:hover { border-color: var(--parchment-dim); }
+  .scale-btn.active-scale { background: var(--parchment-faint); color: var(--gold); border-color: var(--gold-dim); }
+
+  /* View toggle */
+  .view-toggle { display: flex; gap: 6px; }
+  .view-btn {
+    padding: 6px 12px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .view-btn.active { background: var(--parchment-faint); color: var(--gold); border-color: var(--gold-dim); }
+
+  /* Add new card button */
+  .add-card-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 20px;
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 4px;
+  }
+
+  .add-card-btn:hover {
+    border-color: var(--gold-dim);
+    color: var(--gold);
+    background: var(--glow-gold);
+  }
+
+  /* Session beats list */
+  .beats-list { list-style: none; }
+  .beats-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+  .beats-list li:last-child { border-bottom: none; }
+  .beats-list li::before { content: '◦'; color: var(--gold-dim); margin-top: 2px; }
+
+  /* World card faction list */
+  .faction-entry {
+    background: var(--obsidian-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+
+  .faction-name {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--parchment);
+    margin-bottom: 4px;
+  }
+
+  .faction-desc { font-size: 13px; color: var(--text-primary); line-height: 1.5; }
+
+  /* Highlighted callout */
+  .callout {
+    background: var(--parchment-faint);
+    border: 1px solid var(--border-gold);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-top: 8px;
+  }
+
+  .callout p { font-size: 14px; color: var(--parchment); line-height: 1.6; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ── CLAUDE API ──────────────────────────────────────────────────────────────
+const WORKER_URL = 'https://dm-tool.eperry0713.workers.dev';
+
+async function callClaude(systemPrompt, userPrompt) {
+  const response = await fetch(WORKER_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }]
+    })
+  });
+  const data = await response.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.content[0].text;
+}
+
+// ── HOOKS ───────────────────────────────────────────────────────────────────
+// ── SUPABASE ─────────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://iovmwvdozylxmetfuymq.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlvdm13dmRvenlseG1ldGZ1eW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMzU0NzMsImV4cCI6MjA4OTcxMTQ3M30.7jZMnLMBDoNLxq6W7yR9c0zFNRDfKefU0OZ4WFJLG6E';
+
+const sbHeaders = {
+  'Content-Type': 'application/json',
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Prefer': 'return=representation'
+};
+
+const sb = {
+  async get(table) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*&order=created_at.asc`, { headers: sbHeaders });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async insert(table, body) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, { method:'POST', headers: sbHeaders, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async update(table, id, body) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, { method:'PATCH', headers: sbHeaders, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async del(table, id) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, { method:'DELETE', headers: sbHeaders });
+    if (!r.ok) throw new Error(await r.text());
+  }
+};
+
+const defaultParty = {
+  partyName:'', campaignName:'', level:'', currentLocation:'',
+  dynamics:'', respondsTo:'', stalls:'', assumptions:'', tablePrefs:'', quests:'',
+  characters:{
+    casey:  {name:'Emrys',    player:'Casey',  species:'', charClass:'', background:'', goals:'', flaw:'', backstoryHook:'', wants:''},
+    chris:  {name:'Vesper',   player:'Chris',  species:'', charClass:'', background:'', goals:'', flaw:'', backstoryHook:'', wants:''},
+    josh:   {name:'Berith',   player:'Josh',   species:'', charClass:'', background:'', goals:'', flaw:'', backstoryHook:'', wants:''},
+    mark:   {name:'Krag',     player:'Mark',   species:'', charClass:'', background:'', goals:'', flaw:'', backstoryHook:'', wants:''},
+    ricky:  {name:'Aergia',   player:'Ricky',  species:'', charClass:'', background:'', goals:'', flaw:'', backstoryHook:'', wants:''},
+    zenith: {name:'Yetipede', player:'Zenith', species:'', charClass:'', background:'', goals:'', flaw:'', backstoryHook:'', wants:''},
+  }, notes:''
+};
+
+const defaultWorld = {
+  worldName:'', centralConflict:'', worldState:'', factions:'', villain:'', villainClock:'',
+  activeEvents:'', rumors:'', partyChanges:'', loreHistory:'', geography:'', notes:''
+};
+
+// ── HOOKS ───────────────────────────────────────────────────────────────────
+function useData() {
+  const [data, setData] = useState({
+    npcs:[], locations:[], sessions:[], scenes:[],
+    party: defaultParty, world: defaultWorld,
+    timeline:[], dmNotes:'',
+    _ids:{ party:null, world:null, dmNotes:null },
+    _loaded: false
+  });
+  const [syncStatus, setSyncStatus] = useState('loading');
+  const timers = useRef({});
+
+  useEffect(() => {
+    async function load() {
+      setSyncStatus('loading');
+      try {
+        const [n,l,se,sc,p,w,t,dm] = await Promise.all([
+          sb.get('npcs'), sb.get('locations'), sb.get('sessions'), sb.get('scenes'),
+          sb.get('party'), sb.get('world'), sb.get('timeline'), sb.get('dm_notes')
+        ]);
+        const pr = p[0], wr = w[0], dr = dm[0];
+        setData({
+          npcs:    n.map(r=>({id:r.id,...r.data})),
+          locations: l.map(r=>({id:r.id,...r.data})),
+          sessions:  se.map(r=>({id:r.id,...r.data})),
+          scenes:    sc.map(r=>({id:r.id,...r.data})),
+          party:  pr ? {...defaultParty,...pr.data, characters:{...defaultParty.characters,...(pr.data?.characters||{})}} : defaultParty,
+          world:  wr ? {...defaultWorld,...wr.data} : defaultWorld,
+          timeline: t.map(r=>({id:r.id,...r.data})),
+          dmNotes: dr?.content || '',
+          _ids:{ party: pr?.id||null, world: wr?.id||null, dmNotes: dr?.id||null },
+          _loaded: true
+        });
+        setSyncStatus('saved');
+      } catch(e) { console.error(e); setSyncStatus('error'); }
+    }
+    load();
+  }, []);
+
+  function debounce(key, fn, ms=900) {
+    if (timers.current[key]) clearTimeout(timers.current[key]);
+    setSyncStatus('saving');
+    timers.current[key] = setTimeout(async () => {
+      try { await fn(); setSyncStatus('saved'); }
+      catch(e) { console.error(e); setSyncStatus('error'); }
+    }, ms);
+  }
+
+  async function addCard(table, cardData) {
+    try {
+      setSyncStatus('saving');
+      const rows = await sb.insert(table, {data: cardData});
+      const row = Array.isArray(rows) ? rows[0] : rows;
+      setData(prev => ({...prev, [table]: [...prev[table], {id: row.id, ...cardData}]}));
+      setSyncStatus('saved');
+      return row.id;
+    } catch(e) { console.error(e); setSyncStatus('error'); }
+  }
+
+  function updateCard(table, id, cardData) {
+    setData(prev => ({...prev, [table]: prev[table].map(c => c.id===id ? {...cardData, id} : c)}));
+    debounce(`${table}_${id}`, () => sb.update(table, id, {data: cardData}));
+  }
+
+  async function deleteCard(table, id) {
+    setData(prev => ({...prev, [table]: prev[table].filter(c => c.id!==id)}));
+    try { await sb.del(table, id); setSyncStatus('saved'); }
+    catch(e) { console.error(e); setSyncStatus('error'); }
+  }
+
+  function updateSingle(stateKey, dbTable, value) {
+    setData(prev => {
+      const rowId = prev._ids[stateKey];
+      debounce(stateKey, async () => {
+        if (stateKey === 'dmNotes') {
+          if (rowId) { await sb.update(dbTable, rowId, {content: value}); }
+          else {
+            const rows = await sb.insert(dbTable, {content: value});
+            const row = Array.isArray(rows) ? rows[0] : rows;
+            setData(p => ({...p, _ids:{...p._ids, [stateKey]: row.id}}));
+          }
+        } else {
+          if (rowId) { await sb.update(dbTable, rowId, {data: value}); }
+          else {
+            const rows = await sb.insert(dbTable, {data: value});
+            const row = Array.isArray(rows) ? rows[0] : rows;
+            setData(p => ({...p, _ids:{...p._ids, [stateKey]: row.id}}));
+          }
+        }
+      });
+      return {...prev, [stateKey]: value};
+    });
+  }
+
+  async function addTimeline(entry) {
+    try {
+      setSyncStatus('saving');
+      const rows = await sb.insert('timeline', {data: entry});
+      const row = Array.isArray(rows) ? rows[0] : rows;
+      setData(prev => ({...prev, timeline: [...prev.timeline, {id: row.id, ...entry}]}));
+      setSyncStatus('saved');
+    } catch(e) { console.error(e); setSyncStatus('error'); }
+  }
+
+  async function deleteTimeline(id) {
+    setData(prev => ({...prev, timeline: prev.timeline.filter(e => e.id!==id)}));
+    try { await sb.del('timeline', id); }
+    catch(e) { console.error(e); setSyncStatus('error'); }
+  }
+
+  return { data, syncStatus, addCard, updateCard, deleteCard, updateSingle, addTimeline, deleteTimeline };
+}
+
+// ── COMPONENTS ──────────────────────────────────────────────────────────────
+
+function Toast({ message, show }) {
+  return <div className={`toast ${show ? 'show' : ''}`}>{message}</div>;
+}
+
+function LoadingDots() {
+  return (
+    <div className="claude-loading">
+      <span>The oracle speaks</span>
+      <span className="loading-dots">
+        <span>·</span><span>·</span><span>·</span>
+      </span>
+    </div>
+  );
+}
+
+function ClaudePanel({ result, loading, error }) {
+  if (!loading && !result && !error) return null;
+  return (
+    <div className="claude-panel">
+      <div className="claude-panel-header">Oracle's Response</div>
+      {loading && <LoadingDots />}
+      {error && <div style={{ color: 'var(--blood-bright)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>⚠ {error}</div>}
+      {result && <div className="claude-response">{result}</div>}
+    </div>
+  );
+}
+
+function StatusSelector({ value, onChange }) {
+  const tags = ['Calm', 'Nervous', 'Suspicious', 'Hostile', 'Friendly', 'Drunk', 'Grieving', 'Elated', 'Desperate', 'Guarded', 'Distracted', 'Fearful'];
+  return (
+    <div className="status-select">
+      {tags.map(t => (
+        <button key={t} className={`status-tag ${value === t ? 'active-tag' : ''}`} onClick={() => onChange(value === t ? '' : t)}>
+          {t}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function RelationshipSelector({ value, onChange }) {
+  const rels = ['Ally', 'Neutral', 'Hostile', 'Unknown', 'Complicated'];
+  return (
+    <div className="rel-select">
+      {rels.map(r => (
+        <button key={r} className={`rel-btn ${value === r ? `active-rel ${r.toLowerCase()}` : ''}`} onClick={() => onChange(value === r ? '' : r)}>
+          {r}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function DangerSelector({ value, onChange }) {
+  const levels = ['Safe', 'Uneasy', 'Volatile', 'Deadly'];
+  return (
+    <div className="danger-select">
+      {levels.map(l => (
+        <button key={l} className={`danger-btn ${l.toLowerCase()} ${value === l ? 'active-danger' : ''}`} onClick={() => onChange(value === l ? '' : l)}>
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function PacingSelector({ value, onChange }) {
+  return (
+    <div className="pacing-select">
+      {['Slow', 'Medium', 'Fast'].map(p => (
+        <button key={p} className={`pacing-btn ${p.toLowerCase()} ${value === p ? 'active-pacing' : ''}`} onClick={() => onChange(value === p ? '' : p)}>
+          {p}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── NPC CARD ────────────────────────────────────────────────────────────────
+function NPCCard({ npc, onUpdate, onDelete }) {
+  const [expanded, setExpanded] = useState(true);
+  const [dialogueCtx, setDialogueCtx] = useState('');
+  const [knowCtx, setKnowCtx] = useState('');
+  const [reactCtx, setReactCtx] = useState('');
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [activeBtn, setActiveBtn] = useState('');
+
+  const f = (field) => (val) => onUpdate({ ...npc, [field]: val });
+
+  const npcContext = () => `
+NPC NAME: ${npc.name || 'Unknown'}
+SPECIES: ${npc.species || ''}
+AGE: ${npc.age || ''}
+OCCUPATION: ${npc.occupation || ''}
+AFFILIATION: ${npc.affiliation || ''}
+BACKGROUND: ${npc.background || ''}
+PHYSICAL DESCRIPTION: ${npc.physicalDesc || ''}
+STANCE ON CENTRAL CONFLICT: ${npc.conflictStance || ''}
+QUESTS & ENTANGLEMENTS: ${npc.quests || ''}
+CHARACTER HOOK: ${npc.hook || ''}
+VOICE & SPEECH PATTERNS: ${npc.voice || ''}
+CORE DESIRE: ${npc.desire || ''}
+CORE FEAR: ${npc.fear || ''}
+THE SECRET: ${npc.secret || ''}
+RELATIONSHIP TO PARTY: ${npc.relationship || ''}
+CURRENT DISPOSITION: ${npc.disposition || ''}
+PRESSURE POINTS & TELLS: ${npc.pressure || ''}
+`;
+
+  async function handleDialogue() {
+    setLoading(true); setError(''); setResult(''); setActiveBtn('dialogue');
+    try {
+      const sys = `You are a D&D dungeon master assistant. Based on the NPC information provided, generate in-character dialogue that is authentic to their personality, speech patterns, and current disposition. Stay in character completely. Be concise but vivid. If context is provided about what's happening or what was asked, respond directly to that situation. If no context, generate a characteristic statement or greeting.`;
+      const prompt = npcContext() + (dialogueCtx ? `\nCONTEXT: ${dialogueCtx}` : '\nGenerate a characteristic response or dialogue from this NPC.');
+      setResult(await callClaude(sys, prompt));
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  async function handleKnow() {
+    setLoading(true); setError(''); setResult(''); setActiveBtn('know');
+    try {
+      const sys = `You are a D&D dungeon master assistant. Based on the NPC's background, occupation, affiliation, and role, determine what they would plausibly know about the topic asked. Filter this through their personality and how they'd present this information. Be specific and useful for a DM running this character.`;
+      const prompt = npcContext() + `\nTOPIC THE PARTY IS ASKING ABOUT: ${knowCtx || 'What do they know about the current situation?'}`;
+      setResult(await callClaude(sys, prompt));
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  async function handleReact() {
+    setLoading(true); setError(''); setResult(''); setActiveBtn('react');
+    try {
+      const sys = `You are a D&D dungeon master assistant. Based on the NPC's personality, fears, desires, current disposition, and relationship with the party, describe how they would emotionally and behaviorally react to the described action. Include body language, tone shift, and what they do next. Be specific and useful for improv roleplay.`;
+      const prompt = npcContext() + `\nPARTY'S ACTION OR WORDS: ${reactCtx || 'The party approaches this NPC.'}`;
+      setResult(await callClaude(sys, prompt));
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  const relClass = { Ally: 'badge-ally', Hostile: 'badge-hostile', Neutral: 'badge-neutral', Unknown: 'badge-unknown', Complicated: 'badge-complicated' };
+
+  return (
+    <div className="grimoire-card">
+      <div className="card-header">
+        <div className="card-header-left">
+          <span className="card-type-badge">NPC</span>
+          <span className="card-name">{npc.name || 'Unnamed NPC'}</span>
+          {npc.relationship && <span className={`badge ${relClass[npc.relationship] || 'badge-neutral'}`}>{npc.relationship}</span>}
+          {npc.disposition && <span className="badge badge-gold">{npc.disposition}</span>}
+        </div>
+        <div className="card-actions">
+          <button className="btn btn-ghost btn-sm" onClick={() => setExpanded(!expanded)}>{expanded ? '▲' : '▼'}</button>
+          <button className="btn btn-danger btn-sm" onClick={onDelete}>✕</button>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="card-body">
+          {/* IDENTITY */}
+          <div className="field-group">
+            <div className="field-section-label">Identity</div>
+            <div className="field-row-3">
+              <div className="field"><label>Name</label><input type="text" value={npc.name || ''} onChange={e => f('name')(e.target.value)} placeholder="Full name..." /></div>
+              <div className="field"><label>Species</label><input type="text" value={npc.species || ''} onChange={e => f('species')(e.target.value)} placeholder="Human, Elf..." /></div>
+              <div className="field"><label>Age</label><input type="text" value={npc.age || ''} onChange={e => f('age')(e.target.value)} placeholder="Age or era..." /></div>
+            </div>
+            <div className="field-row">
+              <div className="field"><label>Occupation / Role</label><input type="text" value={npc.occupation || ''} onChange={e => f('occupation')(e.target.value)} placeholder="What do they do..." /></div>
+              <div className="field"><label>Affiliation</label><input type="text" value={npc.affiliation || ''} onChange={e => f('affiliation')(e.target.value)} placeholder="Guild, faction, family..." /></div>
+            </div>
+          </div>
+
+          {/* BACKGROUND */}
+          <div className="field-group">
+            <div className="field-section-label">Background</div>
+            <div className="field"><label>Background</label><textarea value={npc.background || ''} onChange={e => f('background')(e.target.value)} placeholder="2-3 sentences. Origin, defining event, how they ended up here..." /></div>
+            <div className="field"><label>Physical Description</label><input type="text" value={npc.physicalDesc || ''} onChange={e => f('physicalDesc')(e.target.value)} placeholder="One or two lines — the feature you notice first..." /></div>
+          </div>
+
+          {/* WORLD POSITION */}
+          <div className="field-group">
+            <div className="field-section-label">World Position</div>
+            <div className="field"><label>Stance on the Central Conflict</label><textarea className="short" value={npc.conflictStance || ''} onChange={e => f('conflictStance')(e.target.value)} placeholder="Loyal, opposed, profiting, ignorant, neutral..." /></div>
+            <div className="field"><label>Quests & Entanglements</label><textarea className="short" value={npc.quests || ''} onChange={e => f('quests')(e.target.value)} placeholder="What quests is this NPC tied to, and in what role..." /></div>
+          </div>
+
+          {/* PERSONALITY */}
+          <div className="field-group">
+            <div className="field-section-label">Personality</div>
+            <div className="field"><label>Character Hook</label><input type="text" value={npc.hook || ''} onChange={e => f('hook')(e.target.value)} placeholder="One line. The thing you read and immediately hear this person..." /></div>
+            <div className="field"><label>Voice & Speech Patterns</label><input type="text" value={npc.voice || ''} onChange={e => f('voice')(e.target.value)} placeholder="Cadence, vocabulary, verbal tics, accent..." /></div>
+            <div className="field-row">
+              <div className="field"><label>Core Desire</label><input type="text" value={npc.desire || ''} onChange={e => f('desire')(e.target.value)} placeholder="What they want more than anything..." /></div>
+              <div className="field"><label>Core Fear</label><input type="text" value={npc.fear || ''} onChange={e => f('fear')(e.target.value)} placeholder="What they're protecting themselves from..." /></div>
+            </div>
+            <div className="field"><label>The Secret</label><textarea className="short" value={npc.secret || ''} onChange={e => f('secret')(e.target.value)} placeholder="What the party doesn't know. What this NPC would do almost anything to keep buried..." /></div>
+          </div>
+
+          {/* PARTY DYNAMICS */}
+          <div className="field-group">
+            <div className="field-section-label">Party Dynamics</div>
+            <div className="field">
+              <label>Relationship to the Party</label>
+              <RelationshipSelector value={npc.relationship || ''} onChange={f('relationship')} />
+              <input type="text" style={{marginTop: 8}} value={npc.relationshipNote || ''} onChange={e => f('relationshipNote')(e.target.value)} placeholder="One line of context — why this relationship exists..." />
+            </div>
+            <div className="field">
+              <label>Current Disposition</label>
+              <StatusSelector value={npc.disposition || ''} onChange={f('disposition')} />
+            </div>
+          </div>
+
+          {/* PRESSURE POINTS */}
+          <div className="field-group">
+            <div className="field-section-label">The Crack in the Wall</div>
+            <div className="field"><label>Pressure Points & Tells</label><textarea value={npc.pressure || ''} onChange={e => f('pressure')(e.target.value)} placeholder="What breaks this NPC open? What topic, threat, or appeal makes them say what they normally never would..." /></div>
+          </div>
+
+          {/* MISC */}
+          <div className="field-group">
+            <div className="field-section-label">Misc / Notes</div>
+            <textarea value={npc.notes || ''} onChange={e => f('notes')(e.target.value)} placeholder="Anything else that doesn't fit above..." />
+          </div>
+
+          <div className="ornament">— ◆ —</div>
+
+          {/* CLAUDE BUTTONS */}
+          <div className="field-group">
+            <div className="field-section-label">Oracle Buttons</div>
+
+            <div style={{marginBottom: 12}}>
+              <label>Generate Dialogue — Context (optional)</label>
+              <textarea className="short" value={dialogueCtx} onChange={e => setDialogueCtx(e.target.value)} placeholder="What's happening right now / what did the party just ask..." />
+              <div className="flex mt-8 gap-8">
+                <button className="btn btn-primary" onClick={handleDialogue} disabled={loading}>✦ Generate Dialogue</button>
+              </div>
+            </div>
+
+            <div style={{marginBottom: 12}}>
+              <label>What Do They Know? — Topic (optional)</label>
+              <input type="text" value={knowCtx} onChange={e => setKnowCtx(e.target.value)} placeholder="Topic or subject the party is asking about..." />
+              <div className="flex mt-8 gap-8">
+                <button className="btn btn-primary" onClick={handleKnow} disabled={loading}>✦ What Do They Know?</button>
+              </div>
+            </div>
+
+            <div>
+              <label>How Do They React? — Party Action (optional)</label>
+              <input type="text" value={reactCtx} onChange={e => setReactCtx(e.target.value)} placeholder="Describe the party's action or words..." />
+              <div className="flex mt-8 gap-8">
+                <button className="btn btn-primary" onClick={handleReact} disabled={loading}>✦ How Do They React?</button>
+              </div>
+            </div>
+          </div>
+
+          <ClaudePanel result={result} loading={loading} error={error} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── LOCATION CARD ────────────────────────────────────────────────────────────
+function LocationCard({ loc, onUpdate, onDelete }) {
+  const [expanded, setExpanded] = useState(true);
+  const [descCtx, setDescCtx] = useState('');
+  const [nowCtx, setNowCtx] = useState('');
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const f = (field) => (val) => onUpdate({ ...loc, [field]: val });
+
+  const locContext = () => `
+LOCATION NAME: ${loc.name || 'Unknown'}
+TYPE: ${loc.type || ''}
+SETTLEMENT/REGION: ${loc.region || ''}
+SENSORY SNAPSHOT — SIGHT: ${loc.sight || ''}
+SENSORY SNAPSHOT — SOUND: ${loc.sound || ''}
+SENSORY SNAPSHOT — SMELL: ${loc.smell || ''}
+ATMOSPHERE & TONE: ${loc.tone || ''}
+DEFINING FEATURES: ${loc.features || ''}
+USUAL OCCUPANTS: ${loc.occupants || ''}
+HIDDEN DETAIL: ${loc.hidden || ''}
+DANGER LEVEL: ${loc.danger || ''}
+RUMORS & INTEL: ${loc.rumors || ''}
+`;
+
+  async function handleDesc() {
+    setLoading(true); setError(''); setResult('');
+    try {
+      const sys = `You are a D&D dungeon master assistant. Generate a vivid, atmospheric description of this location that a DM can read aloud or use as a springboard. Draw from the sensory snapshot and atmosphere. Make it feel alive and immediate. Vary the description so it feels fresh — not just a list of facts but an experience. 3-5 sentences maximum.`;
+      const prompt = locContext() + (descCtx ? `\nCURRENT CONTEXT: ${descCtx}` : '\nGenerate a fresh atmospheric description.');
+      setResult(await callClaude(sys, prompt));
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  async function handleNow() {
+    setLoading(true); setError(''); setResult('');
+    try {
+      const sys = `You are a D&D dungeon master assistant. Generate a small ambient event or scene happening right now in this location. Something that makes the place feel alive — a minor interaction, a sound, a movement, a moment of drama that doesn't derail the session but adds texture. 2-4 sentences. Make it specific to this location's character.`;
+      const prompt = locContext() + (nowCtx ? `\nCURRENT CIRCUMSTANCES: ${nowCtx}` : '\nGenerate an ambient event happening right now.');
+      setResult(await callClaude(sys, prompt));
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  return (
+    <div className="grimoire-card">
+      <div className="card-header">
+        <div className="card-header-left">
+          <span className="card-type-badge">Location</span>
+          <span className="card-name">{loc.name || 'Unnamed Location'}</span>
+          {loc.region && <span className="badge badge-gold">{loc.region}</span>}
+          {loc.danger && <span className={`badge ${loc.danger === 'Safe' ? 'badge-ally' : loc.danger === 'Deadly' ? 'badge-hostile' : 'badge-neutral'}`}>{loc.danger}</span>}
+        </div>
+        <div className="card-actions">
+          <button className="btn btn-ghost btn-sm" onClick={() => setExpanded(!expanded)}>{expanded ? '▲' : '▼'}</button>
+          <button className="btn btn-danger btn-sm" onClick={onDelete}>✕</button>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="card-body">
+          <div className="field-group">
+            <div className="field-section-label">Identity</div>
+            <div className="field-row-3">
+              <div className="field"><label>Name</label><input type="text" value={loc.name || ''} onChange={e => f('name')(e.target.value)} placeholder="Location name..." /></div>
+              <div className="field"><label>Type</label><input type="text" value={loc.type || ''} onChange={e => f('type')(e.target.value)} placeholder="Tavern, dungeon, forest..." /></div>
+              <div className="field"><label>Settlement / Region</label><input type="text" value={loc.region || ''} onChange={e => f('region')(e.target.value)} placeholder="Town or region..." /></div>
+            </div>
+          </div>
+
+          <div className="field-group">
+            <div className="field-section-label">The Place</div>
+            <div className="field"><label>👁 Sight</label><input type="text" value={loc.sight || ''} onChange={e => f('sight')(e.target.value)} placeholder="One line — what the eye catches first..." /></div>
+            <div className="field"><label>👂 Sound</label><input type="text" value={loc.sound || ''} onChange={e => f('sound')(e.target.value)} placeholder="One line — what fills the ears..." /></div>
+            <div className="field"><label>👃 Smell</label><input type="text" value={loc.smell || ''} onChange={e => f('smell')(e.target.value)} placeholder="One line — what hits the nose..." /></div>
+            <div className="field"><label>Atmosphere & Tone</label><input type="text" value={loc.tone || ''} onChange={e => f('tone')(e.target.value)} placeholder="The emotional weather of this place. Tense and watchful. Warm and chaotic..." /></div>
+            <div className="field"><label>Defining Features</label><textarea className="short" value={loc.features || ''} onChange={e => f('features')(e.target.value)} placeholder="Three things max. What players might touch, investigate, or ask about..." /></div>
+          </div>
+
+          <div className="field-group">
+            <div className="field-section-label">The People</div>
+            <div className="field"><label>Usual Occupants</label><textarea className="short" value={loc.occupants || ''} onChange={e => f('occupants')(e.target.value)} placeholder="Who lives, works, or passes through here..." /></div>
+          </div>
+
+          <div className="field-group">
+            <div className="field-section-label">The Layers</div>
+            <div className="field"><label>Hidden Detail</label><input type="text" value={loc.hidden || ''} onChange={e => f('hidden')(e.target.value)} placeholder="What only a perceptive or curious player finds..." /></div>
+            <div className="field">
+              <label>Danger Level</label>
+              <DangerSelector value={loc.danger || ''} onChange={f('danger')} />
+              <input type="text" style={{marginTop:8}} value={loc.dangerNote || ''} onChange={e => f('dangerNote')(e.target.value)} placeholder="One line of context for why..." />
+            </div>
+            <div className="field"><label>Rumors & Intel</label><textarea value={loc.rumors || ''} onChange={e => f('rumors')(e.target.value)} placeholder="What can the party learn just by being here? Seeds, breadcrumbs, misdirections..." /></div>
+          </div>
+
+          <div className="field-group">
+            <div className="field-section-label">Misc / Notes</div>
+            <textarea value={loc.notes || ''} onChange={e => f('notes')(e.target.value)} placeholder="Anything else..." />
+          </div>
+
+          <div className="ornament">— ◆ —</div>
+
+          <div className="field-group">
+            <div className="field-section-label">Oracle Buttons</div>
+            <div style={{marginBottom: 12}}>
+              <label>Generate Description — Context (optional)</label>
+              <textarea className="short" value={descCtx} onChange={e => setDescCtx(e.target.value)} placeholder="Time of day, crowd size, weather, current events, how the party enters..." />
+              <button className="btn btn-primary mt-8" onClick={handleDesc} disabled={loading}>✦ Generate Description</button>
+            </div>
+            <div>
+              <label>What's Happening Right Now? — Context (optional)</label>
+              <input type="text" value={nowCtx} onChange={e => setNowCtx(e.target.value)} placeholder="Current circumstances, mood of the room, anything unusual..." />
+              <button className="btn btn-primary mt-8" onClick={handleNow} disabled={loading}>✦ What's Happening Right Now?</button>
+            </div>
+          </div>
+
+          <ClaudePanel result={result} loading={loading} error={error} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── SESSION CARD ─────────────────────────────────────────────────────────────
+function SessionCard({ session, onUpdate, onDelete }) {
+  const [expanded, setExpanded] = useState(true);
+  const [helpCtx, setHelpCtx] = useState('');
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const f = (field) => (val) => onUpdate({ ...session, [field]: val });
+
+  const sessionContext = () => `
+SESSION NUMBER: ${session.number || ''}
+SESSION DATE: ${session.date || ''}
+SESSION GOALS: ${session.goals || ''}
+THE ONE THING: ${session.oneThing || ''}
+EMOTIONAL TARGET: ${session.emotionalTarget || ''}
+CONTINGENCY: ${session.contingency || ''}
+PARTY STATUS: ${session.partyStatus || ''}
+THE WORLD IN MOTION: ${session.worldMotion || ''}
+POSSIBLE BEATS: ${session.beats || ''}
+`;
+
+  async function handleRecap() {
+    setLoading(true); setError(''); setResult('');
+    try {
+      const sys = `You are a D&D dungeon master assistant. Based on the raw bullet notes from last session, write a dramatic narrative recap suitable for reading aloud at the start of the next session. Write it in second person ("You found...", "The party discovered..."). Make it evocative and cinematic. 3-5 sentences. Build tension toward what's coming next.`;
+      const prompt = `LAST SESSION RAW NOTES:\n${session.lastRecap || 'No notes provided.'}`;
+      setResult(await callClaude(sys, prompt));
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  async function handleHelp() {
+    setLoading(true); setError(''); setResult('');
+    try {
+      const sys = `You are a D&D dungeon master assistant and improv expert. The session needs a jolt of energy. Based on the session context, generate one unexpected but fitting injection that can happen RIGHT NOW. This could be: a random encounter that ties to the world, a stranger with a quick side quest, a world event bleeding into the scene, an NPC with urgent news, a combat spark, a social ambush, unusual weather with consequences, or anything that creates immediate momentum. Make it feel organic to the session, not random for randomness's sake. Be specific and immediately usable.`;
+      const prompt = sessionContext() + (helpCtx ? `\nCURRENT SITUATION: ${helpCtx}` : '\nThe session needs momentum. Generate something exciting.');
+      setResult(await callClaude(sys, prompt));
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  return (
+    <div className="grimoire-card">
+      <div className="card-header">
+        <div className="card-header-left">
+          <span className="card-type-badge">Session</span>
+          <span className="card-name">Session {session.number || '?'} {session.date ? `— ${session.date}` : ''}</span>
+        </div>
+        <div className="card-actions">
+          <button className="btn btn-ghost btn-sm" onClick={() => setExpanded(!expanded)}>{expanded ? '▲' : '▼'}</button>
+          <button className="btn btn-danger btn-sm" onClick={onDelete}>✕</button>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="card-body">
+          <div className="field-group">
+            <div className="field-section-label">Identity</div>
+            <div className="field-row">
+              <div className="field"><label>Session Number</label><input type="text" value={session.number || ''} onChange={e => f('number')(e.target.value)} placeholder="#" /></div>
+              <div className="field"><label>Session Date</label><input type="date" value={session.date || ''} onChange={e => f('date')(e.target.value)} /></div>
+            </div>
+          </div>
+
+          <div className="field-group">
+            <div className="field-section-label">The Big Picture</div>
+            <div className="field"><label>Session Goals</label><textarea className="short" value={session.goals || ''} onChange={e => f('goals')(e.target.value)} placeholder="What you as the DM are steering toward this session..." /></div>
+            <div className="field">
+              <label>The One Thing</label>
+              <input type="text" value={session.oneThing || ''} onChange={e => f('oneThing')(e.target.value)} placeholder="If this session does one thing right, this is it..." />
+              {session.oneThing && <div className="callout mt-8"><p>🎯 {session.oneThing}</p></div>}
+            </div>
+            <div className="field"><label>Emotional Target</label><input type="text" value={session.emotionalTarget || ''} onChange={e => f('emotionalTarget')(e.target.value)} placeholder="The feeling you want the players to carry home. Dread, triumph, wonder..." /></div>
+            <div className="field"><label>Contingency</label><input type="text" value={session.contingency || ''} onChange={e => f('contingency')(e.target.value)} placeholder="If the party ignores everything, where do you pivot..." /></div>
+          </div>
+
+          <div className="field-group">
+            <div className="field-section-label">The State of Play</div>
+            <div className="field"><label>Party Status</label><textarea className="short" value={session.partyStatus || ''} onChange={e => f('partyStatus')(e.target.value)} placeholder="Where the party is, what they think is happening, what they're planning..." /></div>
+            <div className="field"><label>The World in Motion</label><textarea value={session.worldMotion || ''} onChange={e => f('worldMotion')(e.target.value)} placeholder="What is happening behind the scenes, independent of the players. The world doesn't wait..." /></div>
+            <div className="field"><label>Possible Beats</label><textarea value={session.beats || ''} onChange={e => f('beats')(e.target.value)} placeholder="Bulleted list of options currently on the table for the party..." /></div>
+          </div>
+
+          <div className="field-group">
+            <div className="field-section-label">Memory & Momentum</div>
+            <div className="field"><label>Last Session Recap — Raw Notes</label><textarea className="tall" value={session.lastRecap || ''} onChange={e => f('lastRecap')(e.target.value)} placeholder="Bullet points of what happened last session. Raw notes. These feed the recap button..." /></div>
+            <button className="btn btn-primary mt-8" onClick={handleRecap} disabled={loading}>✦ Generate Session Recap</button>
+          </div>
+
+          <div className="field-group">
+            <div className="field-section-label">Misc / Notes</div>
+            <textarea value={session.notes || ''} onChange={e => f('notes')(e.target.value)} placeholder="Anything else..." />
+          </div>
+
+          <div className="ornament">— ◆ —</div>
+
+          <div className="field-group">
+            <div className="field-section-label">Help Button</div>
+            <label>Context (optional)</label>
+            <textarea className="short" value={helpCtx} onChange={e => setHelpCtx(e.target.value)} placeholder="What just happened? Where did the session go cold, or what direction is the party moving..." />
+            <button className="btn btn-danger mt-8 btn-lg" onClick={handleHelp} disabled={loading}>⚡ Help — Ignite the Session</button>
+          </div>
+
+          <ClaudePanel result={result} loading={loading} error={error} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── SCENE CARD ───────────────────────────────────────────────────────────────
+function SceneCard({ scene, onUpdate, onDelete }) {
+  const [expanded, setExpanded] = useState(true);
+  const [escalateCtx, setEscalateCtx] = useState('');
+  const [deescalateCtx, setDeescalateCtx] = useState('');
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const f = (field) => (val) => onUpdate({ ...scene, [field]: val });
+
+  const sceneContext = () => `
+SCENE NAME: ${scene.name || ''}
+LOCATION: ${scene.location || ''}
+WHY THIS SCENE EXISTS: ${scene.why || ''}
+SCENE GOAL: ${scene.goal || ''}
+WHO IS PRESENT: ${scene.present || ''}
+THE TENSION: ${scene.tension || ''}
+LIVING ATMOSPHERE: ${scene.atmosphere || ''}
+PACING: ${scene.pacing || ''}
+INTERACTIVE ELEMENTS: ${scene.interactive || ''}
+`;
+
+  async function handleEscalate() {
+    setLoading(true); setError(''); setResult('');
+    try {
+      const sys = `You are a D&D dungeon master assistant. The DM needs to escalate this scene. Generate a complication, interruption, or development that raises the stakes, adds pressure, or forces an immediate decision from the players. It should feel organic to the scene's existing tension. Be specific and immediately usable. 2-4 sentences.`;
+      const prompt = sceneContext() + (escalateCtx ? `\nWHAT'S HAPPENING RIGHT NOW: ${escalateCtx}` : '');
+      setResult(await callClaude(sys, prompt));
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  async function handleDeescalate() {
+    setLoading(true); setError(''); setResult('');
+    try {
+      const sys = `You are a D&D dungeon master assistant. The DM needs to de-escalate or redirect this scene. Generate a natural out — a redirect, a breathing moment, or a soft interruption that resets the energy without killing momentum or feeling forced. Make it feel like the scene is evolving, not being shut down. 2-4 sentences.`;
+      const prompt = sceneContext() + (deescalateCtx ? `\nWHAT'S HAPPENING RIGHT NOW: ${deescalateCtx}` : '');
+      setResult(await callClaude(sys, prompt));
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  return (
+    <div className="grimoire-card">
+      <div className="card-header">
+        <div className="card-header-left">
+          <span className="card-type-badge">Scene</span>
+          <span className="card-name">{scene.name || 'Unnamed Scene'}</span>
+          {scene.pacing && <span className={`badge ${scene.pacing === 'Fast' ? 'badge-hostile' : scene.pacing === 'Slow' ? 'badge-unknown' : 'badge-gold'}`}>{scene.pacing}</span>}
+        </div>
+        <div className="card-actions">
+          <button className="btn btn-ghost btn-sm" onClick={() => setExpanded(!expanded)}>{expanded ? '▲' : '▼'}</button>
+          <button className="btn btn-danger btn-sm" onClick={onDelete}>✕</button>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="card-body">
+          <div className="field-group">
+            <div className="field-section-label">Identity</div>
+            <div className="field-row">
+              <div className="field"><label>Scene Name</label><input type="text" value={scene.name || ''} onChange={e => f('name')(e.target.value)} placeholder="Name this moment..." /></div>
+              <div className="field"><label>Location</label><input type="text" value={scene.location || ''} onChange={e => f('location')(e.target.value)} placeholder="Link to location card..." /></div>
+            </div>
+          </div>
+
+          <div className="field-group">
+            <div className="field-section-label">The Setup</div>
+            <div className="field"><label>Why This Scene Exists</label><textarea className="short" value={scene.why || ''} onChange={e => f('why')(e.target.value)} placeholder="The because that makes this scene feel earned rather than placed..." /></div>
+            <div className="field"><label>Scene Goal</label><input type="text" value={scene.goal || ''} onChange={e => f('goal')(e.target.value)} placeholder="What this scene needs to deliver before it's over..." /></div>
+            <div className="field"><label>Who Is Present</label><textarea className="short" value={scene.present || ''} onChange={e => f('present')(e.target.value)} placeholder="Everyone in the scene — party members, NPCs, creatures..." /></div>
+          </div>
+
+          <div className="field-group">
+            <div className="field-section-label">The Feel</div>
+            <div className="field"><label>The Tension</label><textarea className="short" value={scene.tension || ''} onChange={e => f('tension')(e.target.value)} placeholder="The dramatic engine. The thing nobody wants to say, the thing that could go wrong..." /></div>
+            <div className="field"><label>Living Atmosphere</label><textarea className="short" value={scene.atmosphere || ''} onChange={e => f('atmosphere')(e.target.value)} placeholder="The action of the environment. The cold wind that cuts through at the worst moment. Not a description — a dramatic beat..." /></div>
+            <div className="field">
+              <label>Pacing</label>
+              <PacingSelector value={scene.pacing || ''} onChange={f('pacing')} />
+              <input type="text" style={{marginTop:8}} value={scene.pacingNote || ''} onChange={e => f('pacingNote')(e.target.value)} placeholder="One line on why this pace..." />
+            </div>
+          </div>
+
+          <div className="field-group">
+            <div className="field-section-label">The Mechanics</div>
+            <div className="field"><label>Interactive Elements</label><textarea value={scene.interactive || ''} onChange={e => f('interactive')(e.target.value)} placeholder="What players can actually do beyond talk and fight. Objects, environmental details, pressure points they can push..." /></div>
+          </div>
+
+          <div className="field-group">
+            <div className="field-section-label">Misc / Notes</div>
+            <textarea value={scene.notes || ''} onChange={e => f('notes')(e.target.value)} placeholder="Anything else..." />
+          </div>
+
+          <div className="ornament">— ◆ —</div>
+
+          <div className="field-group">
+            <div className="field-section-label">Oracle Buttons</div>
+            <div style={{marginBottom: 12}}>
+              <label>Escalate — Context (optional)</label>
+              <input type="text" value={escalateCtx} onChange={e => setEscalateCtx(e.target.value)} placeholder="What's happening right now in the scene..." />
+              <button className="btn btn-danger mt-8" onClick={handleEscalate} disabled={loading}>⬆ Escalate</button>
+            </div>
+            <div>
+              <label>De-escalate — Context (optional)</label>
+              <input type="text" value={deescalateCtx} onChange={e => setDeescalateCtx(e.target.value)} placeholder="What's happening right now in the scene..." />
+              <button className="btn btn-ice mt-8" onClick={handleDeescalate} disabled={loading}>⬇ De-escalate</button>
+            </div>
+          </div>
+
+          <ClaudePanel result={result} loading={loading} error={error} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── PARTY VIEW ───────────────────────────────────────────────────────────────
+function PartyView({ party, onUpdate }) {
+  const [expandedChars, setExpandedChars] = useState({});
+  const [spotlightName, setSpotlightName] = useState('');
+  const [momentCtx, setMomentCtx] = useState('');
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const f = (field) => (val) => onUpdate({ ...party, [field]: val });
+  const fc = (key, field) => (val) => onUpdate({ ...party, characters: { ...party.characters, [key]: { ...party.characters[key], [field]: val } } });
+
+  const toggleChar = (key) => setExpandedChars(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const partyContext = () => `
+PARTY NAME: ${party.partyName || ''}
+CAMPAIGN: ${party.campaignName || ''}
+LEVEL: ${party.level || ''}
+CURRENT LOCATION: ${party.currentLocation || ''}
+PARTY DYNAMICS: ${party.dynamics || ''}
+WHAT THIS PARTY RESPONDS TO: ${party.respondsTo || ''}
+WHAT STALLS THEM: ${party.stalls || ''}
+PARTY ASSUMPTIONS: ${party.assumptions || ''}
+TABLE PREFERENCES: ${party.tablePrefs || ''}
+CURRENT QUESTS: ${party.quests || ''}
+CHARACTERS:
+${Object.values(party.characters).map(c => `  ${c.player} playing ${c.name} (${c.species} ${c.charClass}): Goals: ${c.goals}, Flaw: ${c.flaw}, Wants: ${c.wants}`).join('\n')}
+`;
+
+  async function handleMoment() {
+    setLoading(true); setError(''); setResult('');
+    try {
+      const sys = `You are a D&D dungeon master assistant. Based on the party information, generate a small scene, NPC interaction, or moment that would naturally spotlight a specific character — drawing on their goals, flaw, or backstory. Make it feel organic, not forced. It should give that player a chance to shine without sidelining others. Be specific and immediately usable.`;
+      const prompt = partyContext() + (momentCtx ? `\nCONTEXT: ${momentCtx}` : '\nGenerate a character spotlight moment for one of the party members.');
+      setResult(await callClaude(sys, prompt));
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  async function handleSpotlight() {
+    if (!spotlightName) { setError('Enter a player or character name first.'); return; }
+    setLoading(true); setError(''); setResult('');
+    try {
+      const target = Object.values(party.characters).find(c =>
+        c.name.toLowerCase().includes(spotlightName.toLowerCase()) ||
+        c.player.toLowerCase().includes(spotlightName.toLowerCase())
+      );
+      const sys = `You are a D&D dungeon master assistant. Generate a focused hook, encounter, or moment built specifically around this character's goals, flaw, backstory, and what their player wants from the campaign. Make it personal and immediately usable at the table.`;
+      const prompt = partyContext() + `\nFOCUS CHARACTER: ${spotlightName}\n${target ? `CHARACTER DETAILS: ${JSON.stringify(target)}` : ''}`;
+      setResult(await callClaude(sys, prompt));
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  const charKeys = Object.keys(party.characters);
+
+  return (
+    <div>
+      <div className="field-group">
+        <div className="field-section-label">Campaign Identity</div>
+        <div className="field-row">
+          <div className="field"><label>Party Name</label><input type="text" value={party.partyName || ''} onChange={e => f('partyName')(e.target.value)} placeholder="What do they call themselves..." /></div>
+          <div className="field"><label>Campaign Name</label><input type="text" value={party.campaignName || ''} onChange={e => f('campaignName')(e.target.value)} placeholder="Campaign title..." /></div>
+        </div>
+        <div className="field-row">
+          <div className="field"><label>Current Level</label><input type="text" value={party.level || ''} onChange={e => f('level')(e.target.value)} placeholder="Level..." /></div>
+          <div className="field"><label>Current Location</label><input type="text" value={party.currentLocation || ''} onChange={e => f('currentLocation')(e.target.value)} placeholder="Where are they now..." /></div>
+        </div>
+      </div>
+
+      <div className="field-group">
+        <div className="field-section-label">The Party as a Unit</div>
+        <div className="field"><label>Party Dynamics</label><textarea className="short" value={party.dynamics || ''} onChange={e => f('dynamics')(e.target.value)} placeholder="Who leads, who follows, who clashes, who is the wildcard, who is the glue..." /></div>
+        <div className="field"><label>What This Party Responds To</label><input type="text" value={party.respondsTo || ''} onChange={e => f('respondsTo')(e.target.value)} placeholder="What lights them up? Combat puzzles, emotional roleplay, mystery, humor, horror..." /></div>
+        <div className="field"><label>What Stalls Them</label><input type="text" value={party.stalls || ''} onChange={e => f('stalls')(e.target.value)} placeholder="What makes the table go quiet or the energy drop..." /></div>
+        <div className="field"><label>Party Assumptions</label><textarea className="short" value={party.assumptions || ''} onChange={e => f('assumptions')(e.target.value)} placeholder="What does the party think is going on? What have they concluded, misread, or committed to..." /></div>
+        <div className="field"><label>Table Preferences</label><textarea className="short" value={party.tablePrefs || ''} onChange={e => f('tablePrefs')(e.target.value)} placeholder="Real player preferences — not character mechanics. Mark loves combat puzzles, Casey engages during emotional scenes..." /></div>
+      </div>
+
+      <div className="field-group">
+        <div className="field-section-label">Active Quests</div>
+        <textarea value={party.quests || ''} onChange={e => f('quests')(e.target.value)} placeholder="Active, rumored, and recently completed quests..." />
+      </div>
+
+      <div className="field-group">
+        <div className="field-section-label">The Characters</div>
+        {charKeys.map(key => {
+          const c = party.characters[key];
+          const isOpen = expandedChars[key];
+          return (
+            <div key={key} className="character-section">
+              <div className="character-section-header" onClick={() => toggleChar(key)}>
+                <div>
+                  <div className="character-section-name">{c.player} — {c.name}</div>
+                  <div className="character-section-sub">{[c.species, c.charClass].filter(Boolean).join(' · ')}</div>
+                </div>
+                <span style={{color: 'var(--text-dim)', fontSize: 12}}>{isOpen ? '▲' : '▼'}</span>
+              </div>
+              {isOpen && (
+                <div className="character-section-body">
+                  <div className="field-row-3">
+                    <div className="field"><label>Species</label><input type="text" value={c.species || ''} onChange={e => fc(key,'species')(e.target.value)} /></div>
+                    <div className="field"><label>Class</label><input type="text" value={c.charClass || ''} onChange={e => fc(key,'charClass')(e.target.value)} /></div>
+                    <div className="field"><label>Background</label><input type="text" value={c.background || ''} onChange={e => fc(key,'background')(e.target.value)} /></div>
+                  </div>
+                  <div className="field"><label>Goals & Motivations</label><textarea className="short" value={c.goals || ''} onChange={e => fc(key,'goals')(e.target.value)} /></div>
+                  <div className="field-row">
+                    <div className="field"><label>Character Flaw</label><input type="text" value={c.flaw || ''} onChange={e => fc(key,'flaw')(e.target.value)} /></div>
+                    <div className="field"><label>Backstory Hook</label><input type="text" value={c.backstoryHook || ''} onChange={e => fc(key,'backstoryHook')(e.target.value)} /></div>
+                  </div>
+                  <div className="field"><label>What {c.name} wants from this campaign</label><textarea className="short" value={c.wants || ''} onChange={e => fc(key,'wants')(e.target.value)} /></div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="field-group">
+        <div className="field-section-label">Misc / Notes</div>
+        <textarea value={party.notes || ''} onChange={e => f('notes')(e.target.value)} placeholder="Anything else..." />
+      </div>
+
+      <div className="ornament">— ◆ —</div>
+
+      <div className="field-group">
+        <div className="field-section-label">Oracle Buttons</div>
+        <div style={{marginBottom: 12}}>
+          <label>Character Moment — Context (optional)</label>
+          <textarea className="short" value={momentCtx} onChange={e => setMomentCtx(e.target.value)} placeholder="Current circumstances, recent events, specific notes..." />
+          <button className="btn btn-primary mt-8" onClick={handleMoment} disabled={loading}>✦ Character Moment</button>
+        </div>
+        <div>
+          <label>Spotlight — Player or Character Name (required)</label>
+          <input type="text" value={spotlightName} onChange={e => setSpotlightName(e.target.value)} placeholder="e.g. Casey, Emrys, Mark, Krag..." />
+          <button className="btn btn-primary mt-8" onClick={handleSpotlight} disabled={loading || !spotlightName}>✦ Spotlight</button>
+        </div>
+      </div>
+
+      <ClaudePanel result={result} loading={loading} error={error} />
+    </div>
+  );
+}
+
+// ── WORLD VIEW ───────────────────────────────────────────────────────────────
+function WorldView({ world, onUpdate }) {
+  const f = (field) => (val) => onUpdate({ ...world, [field]: val });
+
+  return (
+    <div>
+      <div className="field-group">
+        <div className="field-section-label">The World</div>
+        <div className="field-row">
+          <div className="field"><label>World / Campaign Name</label><input type="text" value={world.worldName || ''} onChange={e => f('worldName')(e.target.value)} placeholder="Name of the world or setting..." /></div>
+        </div>
+        <div className="field"><label>The Central Conflict</label><textarea className="short" value={world.centralConflict || ''} onChange={e => f('centralConflict')(e.target.value)} placeholder="The core tension driving the entire campaign. One or two sentences. Everything else feeds this..." /></div>
+        {world.centralConflict && <div className="callout mt-8"><p>⚔ {world.centralConflict}</p></div>}
+        <div className="field mt-12"><label>The State of the World</label><textarea value={world.worldState || ''} onChange={e => f('worldState')(e.target.value)} placeholder="What does everyday life look like? What do common people feel, fear, and talk about..." /></div>
+      </div>
+
+      <div className="field-group">
+        <div className="field-section-label">Powers in Motion</div>
+        <div className="field"><label>Factions & Powers</label><textarea className="tall" value={world.factions || ''} onChange={e => f('factions')(e.target.value)} placeholder="Every major organization, government, religion, guild, or force with an agenda. For each: who they are, what they want, what they're willing to do, how they view the party..." /></div>
+        <div className="field"><label>The Villain</label><textarea value={world.villain || ''} onChange={e => f('villain')(e.target.value)} placeholder="Identity, goal, method, reach, justification. What do they believe? What don't they know? Where are they vulnerable..." /></div>
+        <div className="field"><label>The Villain's Clock</label><textarea className="short" value={world.villainClock || ''} onChange={e => f('villainClock')(e.target.value)} placeholder="What happens if the party does absolutely nothing? The world in 1 session, 5 sessions, 10 sessions without intervention..." /></div>
+      </div>
+
+      <div className="field-group">
+        <div className="field-section-label">The Living World</div>
+        <div className="field"><label>Active Events & Threads</label><textarea value={world.activeEvents || ''} onChange={e => f('activeEvents')(e.target.value)} placeholder="What is currently happening independent of the party? Wars, famines, political shifts, monster migrations..." /></div>
+        <div className="field"><label>Rumors in the Wind</label><textarea value={world.rumors || ''} onChange={e => f('rumors')(e.target.value)} placeholder="What are people saying? Half-truths, propaganda, genuine warnings circulating through the world..." /></div>
+        <div className="field"><label>What the Party Has Changed</label><textarea value={world.partyChanges || ''} onChange={e => f('partyChanges')(e.target.value)} placeholder="What is different about the world because of what the party has done? Update this every few sessions..." /></div>
+      </div>
+
+      <div className="field-group">
+        <div className="field-section-label">Worldbuilding Reference</div>
+        <div className="field"><label>Lore & History</label><textarea className="tall" value={world.loreHistory || ''} onChange={e => f('loreHistory')(e.target.value)} placeholder="Key historical events, fallen empires, old wars, prophecies, religious truths and heresies. Keep it brief — reference anchor, not wiki..." /></div>
+        <div className="field"><label>Geography & Settlements</label><textarea value={world.geography || ''} onChange={e => f('geography')(e.target.value)} placeholder="Major regions, towns, and landmarks. Enough to orient yourself and link to location cards..." /></div>
+      </div>
+
+      <div className="field-group">
+        <div className="field-section-label">Misc / Notes</div>
+        <textarea value={world.notes || ''} onChange={e => f('notes')(e.target.value)} placeholder="Anything else..." />
+      </div>
+    </div>
+  );
+}
+
+
+// ── TIMELINE VIEW ────────────────────────────────────────────────────────────
+function TimelineView({ timeline, onAdd, onDelete }) {
+  const [newEntry, setNewEntry] = useState({ session: '', content: '' });
+  function addEntry() {
+    if (!newEntry.content) return;
+    onAdd({ session: newEntry.session, content: newEntry.content });
+    setNewEntry({ session: '', content: '' });
+  }
+  return (
+    <div>
+      <div style={{marginBottom: 24}}>
+        <div className="field-row">
+          <div className="field"><label>Session #</label><input type="text" value={newEntry.session} onChange={e => setNewEntry({...newEntry, session: e.target.value})} placeholder="Session number..." /></div>
+        </div>
+        <div className="field"><label>Entry</label><textarea value={newEntry.content} onChange={e => setNewEntry({...newEntry, content: e.target.value})} placeholder="What happened? A major event, world reaction, party decision and its consequence..." /></div>
+        <button className="btn btn-primary mt-8" onClick={addEntry}>+ Add Entry</button>
+      </div>
+      {timeline.length === 0 ? (
+        <div className="empty-state"><div className="empty-icon">📜</div><h3>The Chronicle Awaits</h3><p>Add your first entry to begin the campaign timeline.</p></div>
+      ) : (
+        <div className="timeline">
+          {[...timeline].reverse().map(entry => (
+            <div key={entry.id} className="timeline-entry">
+              {entry.session && <div className="timeline-session">SESSION {entry.session}</div>}
+              <div className="timeline-content">{entry.content}</div>
+              <button className="btn btn-ghost btn-sm" style={{marginTop:6}} onClick={() => onDelete(entry.id)}>Remove</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── GLOBAL TOOLS MODAL ───────────────────────────────────────────────────────
+function GlobalToolModal({ tool, onClose }) {
+  const [ctx, setCtx] = useState('');
+  const [tableSize, setTableSize] = useState('d6');
+  const [lootScale, setLootScale] = useState('Moderate');
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [parsedTable, setParsedTable] = useState(null);
+
+  async function handleYesAnd() {
+    if (!ctx) { setError('Describe what just happened first.'); return; }
+    setLoading(true); setError(''); setResult('');
+    try {
+      const sys = `You are a D&D dungeon master improv expert. The DM needs to run with something unexpected that just happened at the table. Apply the "Yes, And" improv principle — commit to the unexpected thing and build forward from it in a way that serves the story and keeps momentum going. Don't redirect back to the original plan. Accept the new reality and make it interesting. Give the DM 2-4 sentences of specific, immediately usable direction.`;
+      setResult(await callClaude(sys, `WHAT JUST HAPPENED: ${ctx}`));
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  async function handleRollTable() {
+    if (!ctx) { setError('Enter a topic for the table.'); return; }
+    setLoading(true); setError(''); setResult(''); setParsedTable(null);
+    try {
+      const num = parseInt(tableSize.replace('d', ''));
+      const sys = `You are a D&D dungeon master assistant. Generate a ${tableSize} random table on the given topic. Return ONLY a JSON array of exactly ${num} strings, one for each result (1 through ${num}). No preamble, no markdown, no explanation. Just the raw JSON array. Example format: ["Result one","Result two","Result three"]`;
+      const raw = await callClaude(sys, `TOPIC: ${ctx}\nRETURN ONLY A JSON ARRAY OF ${num} STRINGS.`);
+      try {
+        const clean = raw.replace(/```json|```/g, '').trim();
+        const arr = JSON.parse(clean);
+        setParsedTable(arr);
+      } catch { setResult(raw); }
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  async function handleLoot() {
+    if (!ctx) { setError('Enter context for the loot.'); return; }
+    setLoading(true); setError(''); setResult('');
+    try {
+      const sys = `You are a D&D dungeon master assistant specializing in contextual loot that doubles as worldbuilding. Generate ${lootScale} loot appropriate to the context provided. Make items feel specific and meaningful — not generic fantasy treasure. Include a mix of currency, items, and at least one interesting object with a story behind it. Format clearly and be specific about values, conditions, and notable details.`;
+      setResult(await callClaude(sys, `CONTEXT: ${ctx}\nLOOT SCALE: ${lootScale}`));
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  const tableSizes = ['d4','d6','d8','d10','d12'];
+  const lootScales = ['Minor','Moderate','Major','Hoard'];
+
+  const titles = { yesand: 'Yes, And...', rolltable: 'Quick Roll Table', loot: 'Loot Generator' };
+  const icons = { yesand: '🎭', rolltable: '🎲', loot: '💰' };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-title">{icons[tool]} {titles[tool]}</div>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          {tool === 'yesand' && (
+            <>
+              <div className="field">
+                <label>What just happened? (required)</label>
+                <textarea value={ctx} onChange={e => setCtx(e.target.value)} placeholder="A player did something unexpected, the session went off-script, an NPC interaction took on a life of its own..." />
+              </div>
+              <button className="btn btn-primary btn-lg" onClick={handleYesAnd} disabled={loading}>🎭 Yes, And...</button>
+            </>
+          )}
+          {tool === 'rolltable' && (
+            <>
+              <div className="field">
+                <label>Topic (required)</label>
+                <input type="text" value={ctx} onChange={e => setCtx(e.target.value)} placeholder="Tavern rumors, merchant wares, strange weather events, random NPC names..." />
+              </div>
+              <div className="field">
+                <label>Table Size</label>
+                <div className="scale-select">
+                  {tableSizes.map(s => (
+                    <button key={s} className={`scale-btn ${tableSize === s ? 'active-scale' : ''}`} onClick={() => setTableSize(s)}>{s}</button>
+                  ))}
+                </div>
+              </div>
+              <button className="btn btn-primary btn-lg" onClick={handleRollTable} disabled={loading}>🎲 Generate Table</button>
+              {parsedTable && (
+                <div className="roll-table mt-12">
+                  {parsedTable.map((item, i) => (
+                    <div key={i} className="roll-table-row">
+                      <span className="roll-num">{i+1}</span>
+                      <span className="roll-text">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+          {tool === 'loot' && (
+            <>
+              <div className="field">
+                <label>Context (required)</label>
+                <textarea value={ctx} onChange={e => setCtx(e.target.value)} placeholder="Enemy type, location, danger level, campaign tone, any specific inclusions or exclusions..." />
+              </div>
+              <div className="field">
+                <label>Loot Scale</label>
+                <div className="scale-select">
+                  {lootScales.map(s => (
+                    <button key={s} className={`scale-btn ${lootScale === s ? 'active-scale' : ''}`} onClick={() => setLootScale(s)}>{s}</button>
+                  ))}
+                </div>
+              </div>
+              <button className="btn btn-primary btn-lg" onClick={handleLoot} disabled={loading}>💰 Generate Loot</button>
+            </>
+          )}
+          <ClaudePanel result={result} loading={loading} error={error} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────────────────
+function Dashboard({ data, navigate }) {
+  const party = data.party;
+  const sessions = data.sessions;
+  const lastSession = sessions.length > 0 ? sessions[sessions.length - 1] : null;
+  const cardCounts = {
+    npcs: data.npcs.length,
+    locations: data.locations.length,
+    sessions: data.sessions.length,
+    scenes: data.scenes.length
+  };
+
+  return (
+    <div>
+      <div className="dashboard-grid">
+        <div className="dashboard-banner">
+          <h2>{party.campaignName || 'Your Campaign'}</h2>
+          <p>{party.partyName ? `The ${party.partyName}` : 'Set up your party card to get started'} {party.level ? `· Level ${party.level}` : ''} {party.currentLocation ? `· ${party.currentLocation}` : ''}</p>
+          <div className="dashboard-stats">
+            <div className="stat-box">
+              <div className="stat-label">Session</div>
+              <div className="stat-value">{lastSession?.number || '—'}</div>
+              <div className="stat-sub">{lastSession?.date || 'No sessions yet'}</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-label">The One Thing</div>
+              <div className="stat-value" style={{fontSize: 13, lineHeight: 1.4, marginTop: 2}}>{lastSession?.oneThing || '—'}</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-label">Emotional Target</div>
+              <div className="stat-value" style={{fontSize: 13, lineHeight: 1.4, marginTop: 2}}>{lastSession?.emotionalTarget || '—'}</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-label">Contingency</div>
+              <div className="stat-value" style={{fontSize: 13, lineHeight: 1.4, marginTop: 2}}>{lastSession?.contingency || '—'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="quick-access">
+          <h3>Quick Access</h3>
+          <div className="quick-access-grid">
+            {[
+              {key:'npcs', label:'NPCs', icon:'👤'},
+              {key:'locations', label:'Locations', icon:'🗺'},
+              {key:'sessions', label:'Sessions', icon:'📖'},
+              {key:'scenes', label:'Scenes', icon:'🎭'},
+              {key:'party', label:'Party', icon:'⚔'},
+              {key:'world', label:'World', icon:'🌍'},
+            ].map(item => (
+              <button key={item.key} className="quick-card-btn" onClick={() => navigate(item.key)}>
+                <span className="icon">{item.icon}</span>
+                {item.label}
+                {cardCounts[item.key] !== undefined && <span style={{fontSize:10,color:'var(--text-dim)',display:'block'}}>{cardCounts[item.key]} cards</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="info-row">
+        <div className="info-panel">
+          <h4>Active Quests</h4>
+          {party.quests ? <p>{party.quests}</p> : <p className="empty">No quests logged yet.</p>}
+        </div>
+        <div className="info-panel">
+          <h4>World in Motion</h4>
+          {lastSession?.worldMotion ? <p>{lastSession.worldMotion}</p> : <p className="empty">Log world events in your session card.</p>}
+        </div>
+        <div className="info-panel">
+          <h4>Central Conflict</h4>
+          {data.world.centralConflict ? <p>{data.world.centralConflict}</p> : <p className="empty">Define the central conflict in the World card.</p>}
+        </div>
+      </div>
+
+      <div className="info-row">
+        <div className="info-panel">
+          <h4>Party Assumptions</h4>
+          {party.assumptions ? <p>{party.assumptions}</p> : <p className="empty">What does the party think is true?</p>}
+        </div>
+        <div className="info-panel">
+          <h4>What Stalls Them</h4>
+          {party.stalls ? <p>{party.stalls}</p> : <p className="empty">Know what kills your table's energy.</p>}
+        </div>
+        <div className="info-panel">
+          <h4>Villain's Clock</h4>
+          {data.world.villainClock ? <p>{data.world.villainClock}</p> : <p className="empty">What happens if the party does nothing?</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ── SYNC STATUS INDICATOR ────────────────────────────────────────────────────
+function SyncIndicator({ status }) {
+  const configs = {
+    loading: { color: 'var(--ice-bright)',   icon: '◌', label: 'Loading...' },
+    saving:  { color: 'var(--gold)',          icon: '◎', label: 'Saving...' },
+    saved:   { color: 'var(--sage-bright)',   icon: '◉', label: 'Synced' },
+    error:   { color: 'var(--blood-bright)',  icon: '◈', label: 'Sync error' },
+  };
+  const c = configs[status] || configs.saved;
+  return (
+    <div style={{display:'flex', alignItems:'center', gap:6, fontFamily:'var(--font-mono)', fontSize:11, color: c.color}}>
+      <span style={{fontSize:14, animation: status==='saving'||status==='loading' ? 'pulse-gold 1s infinite' : 'none'}}>{c.icon}</span>
+      {c.label}
+    </div>
+  );
+}
+
+// ── LOADING SCREEN ────────────────────────────────────────────────────────────
+function LoadingScreen() {
+  return (
+    <div style={{display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', flexDirection:'column', gap:20}}>
+      <div style={{fontSize:48, animation:'pulse-gold 1.5s ease-in-out infinite'}}>⚔</div>
+      <div style={{fontFamily:'var(--font-display)', fontSize:18, color:'var(--gold)', letterSpacing:'0.1em'}}>Consulting the Grimoire...</div>
+      <div style={{fontFamily:'var(--font-mono)', fontSize:12, color:'var(--text-dim)'}}>Connecting to Supabase</div>
+    </div>
+  );
+}
+
+// ── MAIN APP ─────────────────────────────────────────────────────────────────
+function App() {
+  const { data, syncStatus, addCard, updateCard, deleteCard, updateSingle, addTimeline, deleteTimeline } = useData();
+  const [view, setView] = useState('dashboard');
+  const [activeTool, setActiveTool] = useState(null);
+  const [toast, setToast] = useState({ show: false, msg: '' });
+
+  function showToast(msg) {
+    setToast({ show: true, msg });
+    setTimeout(() => setToast({ show: false, msg: '' }), 2500);
+  }
+
+  const blankNPC      = () => ({name:'', species:'', age:'', occupation:'', affiliation:'', background:'', physicalDesc:'', conflictStance:'', quests:'', hook:'', voice:'', desire:'', fear:'', secret:'', relationship:'', relationshipNote:'', disposition:'', pressure:'', notes:''});
+  const blankLocation = () => ({name:'', type:'', region:'', sight:'', sound:'', smell:'', tone:'', features:'', occupants:'', hidden:'', danger:'', dangerNote:'', rumors:'', notes:''});
+  const blankSession  = () => ({number:'', date:'', goals:'', oneThing:'', emotionalTarget:'', contingency:'', partyStatus:'', worldMotion:'', beats:'', lastRecap:'', notes:''});
+  const blankScene    = () => ({name:'', location:'', why:'', goal:'', present:'', tension:'', atmosphere:'', pacing:'', pacingNote:'', interactive:'', notes:''});
+
+  async function addNPC()      { await addCard('npcs',      blankNPC());      showToast('New NPC card created'); }
+  async function addLocation() { await addCard('locations', blankLocation()); showToast('New location card created'); }
+  async function addSession()  { await addCard('sessions',  blankSession());  showToast('New session card created'); }
+  async function addScene()    { await addCard('scenes',    blankScene());    showToast('New scene card created'); }
+
+  function updateNPC(id, npc)      { updateCard('npcs',      id, npc); }
+  function updateLocation(id, loc) { updateCard('locations', id, loc); }
+  function updateSession(id, s)    { updateCard('sessions',  id, s); }
+  function updateScene(id, s)      { updateCard('scenes',    id, s); }
+
+  async function deleteNPC(id)      { await deleteCard('npcs',      id); showToast('NPC removed'); }
+  async function deleteLocation(id) { await deleteCard('locations', id); showToast('Location removed'); }
+  async function deleteSession(id)  { await deleteCard('sessions',  id); showToast('Session removed'); }
+  async function deleteScene(id)    { await deleteCard('scenes',    id); showToast('Scene removed'); }
+
+  function updateParty(party) { updateSingle('party',   'party',    party); }
+  function updateWorld(world) { updateSingle('world',   'world',    world); }
+  function updateDMNotes(n)   { updateSingle('dmNotes', 'dm_notes', n); }
+
+  const navItems  = [{ key:'dashboard', label:'Dashboard', icon:'⚑' }];
+  const cardItems = [
+    {key:'npcs', label:'NPCs', icon:'👤'},
+    {key:'locations', label:'Locations', icon:'🗺'},
+    {key:'sessions', label:'Sessions', icon:'📖'},
+    {key:'scenes', label:'Scenes', icon:'🎭'},
+    {key:'party', label:'Party', icon:'⚔'},
+    {key:'world', label:'World', icon:'🌍'},
+  ];
+  const toolItems = [
+    {key:'timeline', label:'Timeline', icon:'📜'},
+    {key:'notes', label:'DM Notes', icon:'✏'},
+  ];
+  const viewTitles = {dashboard:'Dashboard', npcs:'NPCs', locations:'Locations', sessions:'Sessions', scenes:'Scenes', party:'Party', world:'World', timeline:'Campaign Timeline', notes:'DM Notes'};
+
+  if (!data._loaded) return <LoadingScreen />;
+
+  function renderContent() {
+    switch(view) {
+      case 'dashboard': return <Dashboard data={data} navigate={setView} />;
+      case 'npcs':
+        return (
+          <div className="entity-list">
+            {data.npcs.length===0 && <div className="empty-state"><div className="empty-icon">👤</div><h3>No NPCs Yet</h3><p>Create your first NPC card to bring your world to life.</p></div>}
+            {data.npcs.map(npc => <NPCCard key={npc.id} npc={npc} onUpdate={n=>updateNPC(npc.id,n)} onDelete={()=>deleteNPC(npc.id)} />)}
+            <button className="add-card-btn" onClick={addNPC}>+ New NPC Card</button>
+          </div>
+        );
+      case 'locations':
+        return (
+          <div className="entity-list">
+            {data.locations.length===0 && <div className="empty-state"><div className="empty-icon">🗺</div><h3>No Locations Yet</h3><p>Create your first location card to map your world.</p></div>}
+            {data.locations.map(loc => <LocationCard key={loc.id} loc={loc} onUpdate={l=>updateLocation(loc.id,l)} onDelete={()=>deleteLocation(loc.id)} />)}
+            <button className="add-card-btn" onClick={addLocation}>+ New Location Card</button>
+          </div>
+        );
+      case 'sessions':
+        return (
+          <div className="entity-list">
+            {data.sessions.length===0 && <div className="empty-state"><div className="empty-icon">📖</div><h3>No Sessions Yet</h3><p>Create your first session card to start prepping.</p></div>}
+            {data.sessions.map(s => <SessionCard key={s.id} session={s} onUpdate={x=>updateSession(s.id,x)} onDelete={()=>deleteSession(s.id)} />)}
+            <button className="add-card-btn" onClick={addSession}>+ New Session Card</button>
+          </div>
+        );
+      case 'scenes':
+        return (
+          <div className="entity-list">
+            {data.scenes.length===0 && <div className="empty-state"><div className="empty-icon">🎭</div><h3>No Scenes Yet</h3><p>Create your first scene card to prep a moment.</p></div>}
+            {data.scenes.map(s => <SceneCard key={s.id} scene={s} onUpdate={x=>updateScene(s.id,x)} onDelete={()=>deleteScene(s.id)} />)}
+            <button className="add-card-btn" onClick={addScene}>+ New Scene Card</button>
+          </div>
+        );
+      case 'party':
+        return <div style={{maxWidth:820}}><PartyView party={data.party} onUpdate={updateParty} /></div>;
+      case 'world':
+        return <div style={{maxWidth:820}}><WorldView world={data.world} onUpdate={updateWorld} /></div>;
+      case 'timeline':
+        return <div style={{maxWidth:720}}><TimelineView timeline={data.timeline} onAdd={addTimeline} onDelete={deleteTimeline} /></div>;
+      case 'notes':
+        return (
+          <div style={{maxWidth:820}}>
+            <div className="notes-area">
+              <textarea value={data.dmNotes||''} onChange={e=>updateDMNotes(e.target.value)} placeholder="Your freeform scratch pad. Mid-session ideas, unexpected threads, future twists — anything that sparks at the table goes here before it disappears..." />
+            </div>
+          </div>
+        );
+      default: return null;
+    }
+  }
+
+  return (
+    <div className="app">
+      <div className="sidebar">
+        <div className="sidebar-logo">
+          <div className="rune">⚔</div>
+          <h1>The Grimoire</h1>
+          <p>DM Prep Tool</p>
+        </div>
+        <div className="sidebar-section">
+          {navItems.map(item => (
+            <button key={item.key} className={`nav-btn ${view===item.key?'active':''}`} onClick={()=>setView(item.key)}>
+              <span className="icon">{item.icon}</span>{item.label}
+            </button>
+          ))}
+        </div>
+        <div className="sidebar-section">
+          <div className="sidebar-section-label">Cards</div>
+          {cardItems.map(item => (
+            <button key={item.key} className={`nav-btn ${view===item.key?'active':''}`} onClick={()=>setView(item.key)}>
+              <span className="icon">{item.icon}</span>{item.label}
+            </button>
+          ))}
+        </div>
+        <div className="sidebar-section">
+          <div className="sidebar-section-label">Reference</div>
+          {toolItems.map(item => (
+            <button key={item.key} className={`nav-btn ${view===item.key?'active':''}`} onClick={()=>setView(item.key)}>
+              <span className="icon">{item.icon}</span>{item.label}
+            </button>
+          ))}
+        </div>
+        <div className="sidebar-bottom">
+          <div className="sidebar-section-label" style={{paddingLeft:0, marginBottom:8}}>Global Tools</div>
+          <button className="global-btn" onClick={()=>setActiveTool('yesand')}>🎭 Yes, And...</button>
+          <button className="global-btn" onClick={()=>setActiveTool('rolltable')}>🎲 Roll Table</button>
+          <button className="global-btn" onClick={()=>setActiveTool('loot')}>💰 Loot Generator</button>
+          <div style={{marginTop:12, paddingTop:10, borderTop:'1px solid var(--border)'}}>
+            <SyncIndicator status={syncStatus} />
+          </div>
+        </div>
+      </div>
+
+      <div className="main">
+        <div className="topbar">
+          <div>
+            <div className="topbar-title">{viewTitles[view]}</div>
+            {data.party.campaignName && <div className="topbar-subtitle">{data.party.campaignName} {data.party.level ? `· Level ${data.party.level}` : ''}</div>}
+          </div>
+          <div className="topbar-actions">
+            {view==='npcs'      && <button className="btn btn-primary btn-sm" onClick={addNPC}>+ NPC</button>}
+            {view==='locations' && <button className="btn btn-primary btn-sm" onClick={addLocation}>+ Location</button>}
+            {view==='sessions'  && <button className="btn btn-primary btn-sm" onClick={addSession}>+ Session</button>}
+            {view==='scenes'    && <button className="btn btn-primary btn-sm" onClick={addScene}>+ Scene</button>}
+          </div>
+        </div>
+        <div className="content">{renderContent()}</div>
+      </div>
+
+      {activeTool && <GlobalToolModal tool={activeTool} onClose={()=>setActiveTool(null)} />}
+      <Toast message={toast.msg} show={toast.show} />
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
